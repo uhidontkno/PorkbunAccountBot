@@ -6,3 +6,11 @@ let data = {"creds":[Math.floor(Date.now()*(Math.random()*10)).toString(16),"Spa
   options.addArguments("--disable-dev-shm-usage","no-sandbox","disable-infobars","--disable-extensions")
   let driver = await new Builder().forBrowser(Browser.CHROME).setChromeOptions(options).build()
   await driver.get('https://porkbun.com/account/login')
+
+  // Checkboxes
+  await driver.findElement(By.id('tosAgreement')).click();
+  await driver.findElement(By.id('newAccountSubscribeNo')).click();
+
+  // Login details
+  await driver.findElement(By.id('newAccountUsername')).sendKeys(data.creds[0]);
+  await driver.findElement(By.id('newAccountPassword')).sendKeys(data.creds[1]);
