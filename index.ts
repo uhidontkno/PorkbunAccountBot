@@ -17,6 +17,7 @@ if (!Number(am)) {
 } else {
   am = Number(process.argv[2]);
 }
+let globStart = Date.now();
 console.log(`Generating ${am} accounts...\n`);
 let estimate = 15*am;
 let eDisplay = `${estimate}s`;
@@ -52,7 +53,8 @@ let data = {"creds":[generateString(12),generatePassword(12)],"email":`spam${gen
   let driver = await new Builder().forBrowser(Browser.CHROME).setChromeOptions(options).build()
   await driver.get('https://porkbun.com/account/login');
   let start = Date.now();
-  await timeout(500);
+  await timeout(250);
+  await driver.wait(until.elementLocated(By.id('tosAgreement')), 10000);
   if (await driver.getTitle() == "Human Verification") {
     driver.executeScript("window.location.reload(true);")
   }
@@ -96,3 +98,4 @@ try {
 } catch {}
 Bun.write("accs.txt",`${f}${data.creds[0]}:${data.creds[1]}\n`)
 }
+console.log(`\nGenerated ${am} accounts in ${Math.round(((Date.now()-globStart)/1000)*100)/100}s`);
