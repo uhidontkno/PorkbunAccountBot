@@ -55,16 +55,15 @@ let ua = ["Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/60
 "Mozilla/5.0 (Linux; Android 5.1.1; KFSUWI) AppleWebKit/537.36 (KHTML, like Gecko) Silk/108.4.6 like Chrome/108.0.5359.220 Safari/537.36"
 ]
 
-let data = {"creds":[generateString(8),generatePassword(15)],"email":`spam${generateString(12)}@xitroo.com`}
-let start = Date.now();
+let data = {"creds":[generateString(12),generatePassword(12)],"email":`spam${generateString(12)}@xitroo.com`}
   let options = new chrome.Options()
   options.addArguments("--disable-dev-shm-usage","no-sandbox","disable-infobars","--disable-extensions","--remote-debugging-port=9222","--disable-dev-shm-using",`user-agent=${ua[Math.floor(Math.random()*ua.length)]}`)
   let driver = await new Builder().forBrowser(Browser.CHROME).setChromeOptions(options).build()
   await driver.get('https://porkbun.com/account/login');
+  let start = Date.now();
   await timeout(500);
   if (await driver.getTitle() == "Human Verification") {
-    console.error("Porkbun flagged us. Exiting!");
-    process.exit(1);
+    driver.executeScript("window.location.reload(true);")
   }
   // Checkboxes
   await driver.findElement(By.id('tosAgreement')).click();
@@ -90,7 +89,6 @@ await timeout(500);
 let email = await getLatestXitroo(data.email);
 let d = new JSDOM(email).window.document;
 let code = d.querySelector("p")?.textContent?.split("verification code is:")[1]
-console.log(code)
 // @ts-expect-error
 await driver.findElement(By.id("modal_verifySessionEmail_code")).sendKeys(code);
 await driver.executeScript("verifySessionEmail();")
