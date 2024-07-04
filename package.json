@@ -9,7 +9,9 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@types/jsdom": "^21.1.7",
     "@types/selenium-webdriver": "^4.1.24",
+    "jsdom": "^24.1.0",
     "selenium-webdriver": "^4.22.0"
   }
 }
