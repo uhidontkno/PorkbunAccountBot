@@ -4,7 +4,7 @@ import { JSDOM } from "jsdom";
 import { generatePassword,generateString,getLatestXitroo,prompt } from "./helper.ts";
 const timeout = (delay: number | undefined) => new Promise(resolve => setTimeout(resolve, delay));
 
-if (!Bun.file("accs.txt").exists()) {
+if (!await Bun.file("accs.txt").exists()) {
   Bun.write("accs.txt","",{createPath:true})
 }
 
