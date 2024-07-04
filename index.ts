@@ -3,6 +3,11 @@ import chrome from "selenium-webdriver/chrome";
 import { JSDOM } from "jsdom";
 import { generatePassword,generateString,getLatestXitroo,prompt } from "./helper.ts";
 const timeout = (delay: number | undefined) => new Promise(resolve => setTimeout(resolve, delay));
+
+if (!Bun.file("accs.txt").exists()) {
+  Bun.write("accs.txt","",{createPath:true})
+}
+
 let am:any = undefined;
 if (!Number(process.argv[2])) {
 am = await prompt("Amount of accounts? ")
@@ -12,12 +17,12 @@ if (!Number(am)) {
 } else {
   am = Number(process.argv[2]);
 }
-console.log(`Generating ${am} accounts...`);
+console.log(`Generating ${am} accounts...\n`);
 let estimate = 15*am;
 let eDisplay = `${estimate}s`;
 if (estimate > 59) {eDisplay = `${estimate / 60}m`}
 if (estimate > (60*60)-1) {eDisplay = `${estimate / (60*60)}h`}
-console.log(`Estimate until completed: ${eDisplay}`)
+console.log(`Estimate until completed: ${eDisplay}\n`)
 let ua = ["Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1",
 "Mozilla/5.0 (iPad; CPU OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1",
 "Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/114.0.5735.99 Mobile/15E148 Safari/604.1",
@@ -85,4 +90,9 @@ await driver.wait(until.urlIs("https://porkbun.com/account"), 10000);
 // Account created.
 if (!process.argv.includes("--debug")) {await driver.quit();}
 console.log(`${data.creds[0]}:${data.creds[1]} [Took ${Math.round(((Date.now()-start)/1000)*100)/100}s]`);
+let f = "";
+try {
+  f = await (Bun.file("accs.txt")).text()
+} catch {}
+Bun.write("accs.txt",`${f}${data.creds[0]}:${data.creds[1]}\n`)
 }
