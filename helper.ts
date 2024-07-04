@@ -38,4 +38,11 @@ export function generateString(length:number) {
     rl.close();
     return res;
   }
+export async function getCSRFToken() {
+  let req = await fetch("https://porkbun.com/account/login")
+  let cookies = req.headers.getSetCookie();
+  for (let i = 0; i < cookies.length; i++) {
+    if (cookies[i].startsWith("csrf")) return cookies[i].split(";")[0].split("=")[1]
+  }
+}
   
