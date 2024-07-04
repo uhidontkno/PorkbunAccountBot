@@ -1,4 +1,5 @@
 import { getLatestXitroo,getCSRFToken } from "./helper.ts"
+import { JSDOM } from "jsdom";
 function generateString(length:number) {
     const characters ='abcdefghijklmnopqrstuvwxyz';
       let result = '';
@@ -81,11 +82,14 @@ let initial = await initalSignup(creds[0],email,csrf || "");
 csrf = String(initial[0]);
 // @ts-expect-error
 console.log(initial[1].status,await initial[1].text())
-let code = await getLatestXitroo(email);
+let em = await getLatestXitroo(email);
+let emDoc = new JSDOM(em).window.document;
+let code = emDoc.querySelector("p")?.textContent?.split("verification code is:")[1];
+// @ts-expect-error
 let emailVerif = await verifyEmail(email,code,csrf || "");
 csrf = String(emailVerif[0]);
 // @ts-expect-error
-console.log(emailVerif[1].status,await emailVerif[1].text())
+console.log(code,emailVerif[1].status,await emailVerif[1].text())
 let created = await signup(creds[0],creds[1],email,csrf)
 // @ts-expect-error
-console.log(created[1].status)
+console.log(created[1].redirected)
