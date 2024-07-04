@@ -97,7 +97,7 @@ await driver.executeScript("verifySessionEmail();")
 await timeout(500);
 await driver.findElement(By.id('tosAgreement')).click();
 await driver.executeScript(`accountCreateCheck();`)
-await driver.wait(until.urlContains("porkbun.com/account"), 10000);
+await driver.wait(until.urlIs("https://porkbun.com/account"), 10000);
 // Account created.
-//await driver.quit();
+await driver.quit();
 console.log(`${data.creds[0]}:${data.creds[1]} [Took ${Date.now()-start}ms]`)
