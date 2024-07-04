@@ -49,7 +49,11 @@ let ua = ["Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/60
 for (let i = 0; i < Number(am);i++) {
   if (process.platform != "win32") {
     if (process.argv.includes("--debug")) {console.log("Making sure remote debugging port is closed...")}
-    await Bun.$`kill -9 $(lsof -t -i:9222)` // Make sure remote debugging port is closed
+    try {
+    await Bun.$`kill -9 $(lsof -t -i:9222) > /dev/null 2> /dev/null` // Make sure remote debugging port is closed
+    } catch {
+      // Remote debugging port is already closed. Nothing to do!
+    }
   }
 let data = {"creds":[generateString(12),generatePassword(12)],"email":`spam${generateString(12)}@xitroo.com`}
   let options = new chrome.Options()
