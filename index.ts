@@ -47,14 +47,6 @@ let ua = ["Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/60
 ]
 
 for (let i = 0; i < Number(am);i++) {
-  if (process.platform != "win32") {
-    if (process.argv.includes("--debug")) {console.log("Making sure remote debugging port is closed...")}
-    try {
-    await Bun.$`kill -9 $(lsof -t -i:9222) > /dev/null 2> /dev/null` // Make sure remote debugging port is closed
-    } catch {
-      // Remote debugging port is already closed. Nothing to do!
-    }
-  }
 let data = {"creds":[generateString(12),generatePassword(12)],"email":`spam${generateString(12)}@xitroo.com`}
   let options = new chrome.Options()
   options.addArguments("--disable-dev-shm-usage","no-sandbox","disable-infobars","--disable-extensions","--remote-debugging-port=9222","--disable-dev-shm-using",`user-agent=${ua[Math.floor(Math.random()*ua.length)]}`)
@@ -99,16 +91,24 @@ await driver.findElement(By.id('tosAgreement')).click();
 await driver.executeScript(`accountCreateCheck();`)
 await driver.wait(until.urlIs("https://porkbun.com/account"), 10000);
 // Account created.
-if (!process.argv.includes("--debug")) {
+//if (!process.argv.includes("--debug")) {
 //await driver.stop_client()
 await driver.close()
 await driver.quit()
-}
+//}
 console.log(`${data.creds[0]}:${data.creds[1]} [Took ${Math.round(((Date.now()-start)/1000)*100)/100}s]`);
 let f = "";
 try {
   f = await (Bun.file("accs.txt")).text()
 } catch {}
-Bun.write("accs.txt",`${f}${data.creds[0]}:${data.creds[1]}\n`)
+Bun.write("accs.txt",`${f}${data.creds[0]}:${data.creds[1]}\n`);
+if (process.platform != "win32") {
+  if (process.argv.includes("--debug")) {console.log("Making sure remote debugging port is closed...")}
+  try {
+  await Bun.$`kill -9 $(lsof -t -i:9222) > /dev/null 2> /dev/null` // Make sure remote debugging port is closed
+  } catch {
+    // Remote debugging port is already closed. Nothing to do!
+  }
+}
 }
 console.log(`\nGenerated ${am} accounts in ${Math.round(((Date.now()-globStart)/1000)*100)/100}s`);
