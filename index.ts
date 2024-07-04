@@ -1,9 +1,9 @@
 import { Builder, Browser, By, Key, until } from "selenium-webdriver";
 import chrome from "selenium-webdriver/chrome";
 import { JSDOM } from "jsdom";
-const characters ='abcdefghijklmnopqrstuvwxyz';
 
 function generateString(length:number) {
+  const characters ='abcdefghijklmnopqrstuvwxyz';
     let result = '';
     const charactersLength = characters.length;
     for ( let i = 0; i < length; i++ ) {
@@ -12,12 +12,22 @@ function generateString(length:number) {
 
     return result;
 }
+function generatePassword(length:number) {
+  const characters ='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*';
+  let result = '';
+  const charactersLength = characters.length;
+  for ( let i = 0; i < length; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+
+  return result;
+}
 const timeout = (delay: number | undefined) => new Promise(resolve => setTimeout(resolve, delay));
 async function getLatestXitroo(address:string) {
   while (true) {
-    await timeout(2000)
+    
   let mail = await (await fetch(`https://api.xitroo.com/v1/mails?locale=en&mailAddress=${address}&mailsPerPage=1&minTimestamp=0&maxTimestamp=${Date.now() / 1000}`)).json();
-  if (!mail["totalMails"]) {continue;}
+  if (!mail["totalMails"]) {await timeout(2000);continue;}
   let email = await (await fetch(`https://api.xitroo.com/v1/mail?locale=en&id=${mail.mails[0]._id}`)).json()
   return atob(email["bodyHtmlStrict"])
   }
@@ -45,15 +55,13 @@ let ua = ["Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/60
 "Mozilla/5.0 (Linux; Android 5.1.1; KFSUWI) AppleWebKit/537.36 (KHTML, like Gecko) Silk/108.4.6 like Chrome/108.0.5359.220 Safari/537.36"
 ]
 
-let data = {"creds":[generateString(8),"A@BB"+generateString(15)],"email":`spam${generateString(12)}@xitroo.com`}
-
+let data = {"creds":[generateString(8),generatePassword(15)],"email":`spam${generateString(12)}@xitroo.com`}
+let start = Date.now();
   let options = new chrome.Options()
   options.addArguments("--disable-dev-shm-usage","no-sandbox","disable-infobars","--disable-extensions","--remote-debugging-port=9222","--disable-dev-shm-using",`user-agent=${ua[Math.floor(Math.random()*ua.length)]}`)
   let driver = await new Builder().forBrowser(Browser.CHROME).setChromeOptions(options).build()
-  let driver2 = await new Builder().forBrowser(Browser.CHROME).setChromeOptions(options).build()
-  await driver2.get("https://ablankpage.pages.dev");
   await driver.get('https://porkbun.com/account/login');
-  await timeout(1000);
+  await timeout(500);
   if (await driver.getTitle() == "Human Verification") {
     console.error("Porkbun flagged us. Exiting!");
     process.exit(1);
@@ -61,7 +69,6 @@ let data = {"creds":[generateString(8),"A@BB"+generateString(15)],"email":`spam$
   // Checkboxes
   await driver.findElement(By.id('tosAgreement')).click();
   await driver.findElement(By.id('newAccountSubscribeNo')).click();
-
   // Login details
   await driver.findElement(By.id('newAccountUsername')).sendKeys(data.creds[0]);
   await driver.findElement(By.id('newAccountPassword')).sendKeys(data.creds[1]);
@@ -74,7 +81,7 @@ let data = {"creds":[generateString(8),"A@BB"+generateString(15)],"email":`spam$
   await driver.findElement(By.id('newAccountCity')).sendKeys("Roseland");
   await driver.findElement(By.id('newAccountZip')).sendKeys("32957");
   await driver.findElement(By.css('#newAccountState > option:nth-child(10)')).click();
-  await driver.findElement(By.id('newAccountPhone')).sendKeys("321-551-1234"); // phone number likely does not exist
+  await driver.findElement(By.id('newAccountPhone')).sendKeys(`321-5${Math.round((Math.random()+1)*40)}-${Math.round((Math.random()+1)*40)}${Math.round((Math.random()+1)*40)}`); // phone number likely does not exist
   await driver.findElement(By.css('#newAccountPhoneCode > option:nth-child(2)')).click();
   driver.executeScript(`accountCreateCheck();`)
 
@@ -86,4 +93,11 @@ let code = d.querySelector("p")?.textContent?.split("verification code is:")[1]
 console.log(code)
 // @ts-expect-error
 await driver.findElement(By.id("modal_verifySessionEmail_code")).sendKeys(code);
-driver.executeScript("verifySessionEmail();")
+await driver.executeScript("verifySessionEmail();")
+await timeout(500);
+await driver.findElement(By.id('tosAgreement')).click();
+await driver.executeScript(`accountCreateCheck();`)
+await driver.wait(until.urlContains("porkbun.com/account"), 10000);
+// Account created.
+//await driver.quit();
+console.log(`${data.creds[0]}:${data.creds[1]} [Took ${Date.now()-start}ms]`)
