@@ -1,38 +1,23 @@
 import { Builder, Browser, By, Key, until } from "selenium-webdriver";
 import chrome from "selenium-webdriver/chrome";
 import { JSDOM } from "jsdom";
-
-function generateString(length:number) {
-  const characters ='abcdefghijklmnopqrstuvwxyz';
-    let result = '';
-    const charactersLength = characters.length;
-    for ( let i = 0; i < length; i++ ) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-
-    return result;
-}
-function generatePassword(length:number) {
-  const characters ='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*';
-  let result = '';
-  const charactersLength = characters.length;
-  for ( let i = 0; i < length; i++ ) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-
-  return result;
-}
+import { generatePassword,generateString,getLatestXitroo,prompt } from "./helper.ts";
 const timeout = (delay: number | undefined) => new Promise(resolve => setTimeout(resolve, delay));
-async function getLatestXitroo(address:string) {
-  while (true) {
-    
-  let mail = await (await fetch(`https://api.xitroo.com/v1/mails?locale=en&mailAddress=${address}&mailsPerPage=1&minTimestamp=0&maxTimestamp=${Date.now() / 1000}`)).json();
-  if (!mail["totalMails"]) {await timeout(2000);continue;}
-  let email = await (await fetch(`https://api.xitroo.com/v1/mail?locale=en&id=${mail.mails[0]._id}`)).json()
-  return atob(email["bodyHtmlStrict"])
-  }
+let am:any = undefined;
+if (!Number(process.argv[2])) {
+am = await prompt("Amount of accounts?")
+if (!Number(am)) {
+  console.error("Not a valid number.");process.exit(1);
 }
-
+} else {
+  am = Number(process.argv[2]);
+}
+console.log(`Generating ${am} accounts...`);
+let estimate = 15*am;
+let eDisplay = `${estimate}s`;
+if (estimate > 59) {eDisplay = `${estimate}m`}
+if (estimate > (60*60)-1) {eDisplay = `${estimate}h`}
+console.log(`Estimate until completed: ${eDisplay}`)
 let ua = ["Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1",
 "Mozilla/5.0 (iPad; CPU OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1",
 "Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/114.0.5735.99 Mobile/15E148 Safari/604.1",
@@ -54,10 +39,11 @@ let ua = ["Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/60
 "Mozilla/5.0 (Android 13; Mobile; rv:109.0) Gecko/114.0 Firefox/114.0",
 "Mozilla/5.0 (Linux; Android 5.1.1; KFSUWI) AppleWebKit/537.36 (KHTML, like Gecko) Silk/108.4.6 like Chrome/108.0.5359.220 Safari/537.36"
 ]
-
+for (let i = 0; i < Number(am);i++) {
 let data = {"creds":[generateString(12),generatePassword(12)],"email":`spam${generateString(12)}@xitroo.com`}
   let options = new chrome.Options()
   options.addArguments("--disable-dev-shm-usage","no-sandbox","disable-infobars","--disable-extensions","--remote-debugging-port=9222","--disable-dev-shm-using",`user-agent=${ua[Math.floor(Math.random()*ua.length)]}`)
+  if (!process.argv.includes("--debug")) {options.addArguments("headless")}
   let driver = await new Builder().forBrowser(Browser.CHROME).setChromeOptions(options).build()
   await driver.get('https://porkbun.com/account/login');
   let start = Date.now();
@@ -97,5 +83,6 @@ await driver.findElement(By.id('tosAgreement')).click();
 await driver.executeScript(`accountCreateCheck();`)
 await driver.wait(until.urlIs("https://porkbun.com/account"), 10000);
 // Account created.
-await driver.quit();
-console.log(`${data.creds[0]}:${data.creds[1]} [Took ${Date.now()-start}ms]`)
+if (!process.argv.includes("--debug")) {await driver.quit();}
+console.log(`${data.creds[0]}:${data.creds[1]} [Took ${Math.round(((Date.now()-start)/1000)*100)/100}s]`);
+}
