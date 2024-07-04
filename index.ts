@@ -19,7 +19,7 @@ if (!Number(am)) {
 }
 let globStart = Date.now();
 console.log(`Generating ${am} accounts...\n`);
-let estimate = 15*am;
+let estimate = 17*am;
 let eDisplay = `${estimate}s`;
 if (estimate > 59) {eDisplay = `${estimate / 60}m`}
 if (estimate > (60*60)-1) {eDisplay = `${estimate / (60*60)}h`}
@@ -45,7 +45,12 @@ let ua = ["Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/60
 "Mozilla/5.0 (Android 13; Mobile; rv:109.0) Gecko/114.0 Firefox/114.0",
 "Mozilla/5.0 (Linux; Android 5.1.1; KFSUWI) AppleWebKit/537.36 (KHTML, like Gecko) Silk/108.4.6 like Chrome/108.0.5359.220 Safari/537.36"
 ]
+
 for (let i = 0; i < Number(am);i++) {
+  if (process.platform != "win32") {
+    if (process.argv.includes("--debug")) {console.log("Making sure remote debugging port is closed...")}
+    await Bun.$`kill-9 $(lsof -t -i:9222)` // Make sure remote debugging port is closed
+  }
 let data = {"creds":[generateString(12),generatePassword(12)],"email":`spam${generateString(12)}@xitroo.com`}
   let options = new chrome.Options()
   options.addArguments("--disable-dev-shm-usage","no-sandbox","disable-infobars","--disable-extensions","--remote-debugging-port=9222","--disable-dev-shm-using",`user-agent=${ua[Math.floor(Math.random()*ua.length)]}`)
@@ -54,7 +59,7 @@ let data = {"creds":[generateString(12),generatePassword(12)],"email":`spam${gen
   await driver.get('https://porkbun.com/account/login');
   let start = Date.now();
   await timeout(250);
-  await driver.wait(until.elementLocated(By.id('tosAgreement')), 10000);
+  await driver.wait(until.elementLocated(By.id('tosAgreement')), 30000);
   if (await driver.getTitle() == "Human Verification") {
     driver.executeScript("window.location.reload(true);")
   }
@@ -90,7 +95,11 @@ await driver.findElement(By.id('tosAgreement')).click();
 await driver.executeScript(`accountCreateCheck();`)
 await driver.wait(until.urlIs("https://porkbun.com/account"), 10000);
 // Account created.
-if (!process.argv.includes("--debug")) {await driver.quit();}
+if (!process.argv.includes("--debug")) {
+//await driver.stop_client()
+await driver.close()
+await driver.quit()
+}
 console.log(`${data.creds[0]}:${data.creds[1]} [Took ${Math.round(((Date.now()-start)/1000)*100)/100}s]`);
 let f = "";
 try {
